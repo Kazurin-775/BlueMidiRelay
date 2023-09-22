@@ -14,7 +14,7 @@ namespace BlueMidiRelay
             public byte Data1;
         }
 
-        public event EventHandler<MidiMessage> MessageReceived;
+        public event EventHandler<MidiMessage>? MessageReceived;
         private readonly ulong _deviceId;
         private BluetoothLEDevice? _device;
         private GattCharacteristic? _characteristic;
