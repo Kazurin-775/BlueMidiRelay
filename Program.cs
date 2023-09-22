@@ -2,7 +2,7 @@
 using CommandLine;
 
 var parsedArgs = Parser.Default
-    .ParseArguments<ScanOptions, MonitorOptions>(args);
+    .ParseArguments<ScanOptions, MonitorOptions, ListMidiOptions, ForwardOptions>(args);
 await parsedArgs.WithParsedAsync(async (ScanOptions opts) =>
     {
         var scanner = new Scanner(opts.ShowNonMidi);
@@ -40,6 +40,36 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
         Console.WriteLine("Error: cannot connect to device.");
     }
 });
+parsedArgs.WithParsed((ListMidiOptions opts) => MidiDevice.ListAll());
+await parsedArgs.WithParsedAsync(async (ForwardOptions opts) =>
+{
+    if (opts.Source.Length != 12 || !opts.Source.All(IsHexDigit))
+    {
+        Console.WriteLine("Error: malformed device address");
+        return;
+    }
+    var address = ulong.Parse(opts.Source, System.Globalization.NumberStyles.HexNumber);
+
+    var midiOut = MidiDevice.FindMidiOutByName(opts.Destination);
+    if (midiOut == null)
+    {
+        Console.WriteLine("Error: cannot find MIDI device " + opts.Destination);
+        return;
+    }
+    var midiRelay = new MidiRelay(address);
+    midiRelay.MessageReceived += (_, e) =>
+    {
+        MidiDevice.SendMessageTo(e, midiOut);
+    };
+    if (!await midiRelay.Connect())
+    {
+        Console.WriteLine("Error: cannot connect to bluetooth MIDI device.");
+        return;
+    }
+    Console.WriteLine("Devices connected, forwarding MIDI messages...");
+
+    await Task.Delay(Timeout.Infinite);
+});
 
 bool IsHexDigit(char c)
 {
@@ -63,4 +93,17 @@ class MonitorOptions
 {
     [Option('a', "address", Required = true, HelpText = "The device's bluetooth address")]
     public string Address { get; set; }
+}
+
+[Verb("list-midi", HelpText = "List all local MIDI devices")]
+class ListMidiOptions { }
+
+[Verb("forward", HelpText = "Forward bluetooth MIDI input to local output")]
+class ForwardOptions
+{
+    [Option('s', "source", Required = true, HelpText = "The source device's bluetooth address")]
+    public string Source { get; set; }
+
+    [Option('d', "dest", Required = true, HelpText = "Name of the destination MIDI output")]
+    public string Destination { get; set; }
 }
