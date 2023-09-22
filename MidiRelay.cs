@@ -135,7 +135,15 @@ namespace BlueMidiRelay
                 };
                 i += 2;
 
-                MessageReceived?.Invoke(this, message);
+                try
+                {
+                    MessageReceived?.Invoke(this, message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("MidiRelay: error calling OnMessageReceived");
+                    Console.WriteLine(ex.ToString());
+                }
             }
         }
     }
