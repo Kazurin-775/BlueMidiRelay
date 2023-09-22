@@ -6,7 +6,7 @@ var parsedArgs = Parser.Default
 await parsedArgs.WithParsedAsync(async (ScanOptions opts) =>
     {
         var scanner = new Scanner(opts.ShowNonMidi);
-        await scanner.Run((int)(opts.Interval * 1000));
+        await scanner.Run((int)(opts.Timeout * 1000));
     });
 await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
 {
@@ -81,8 +81,8 @@ bool IsHexDigit(char c)
 [Verb("scan", HelpText = "Scan for bluetooth MIDI devices")]
 class ScanOptions
 {
-    [Option('i', "interval", Default = 15u, HelpText = "The number of seconds that the scanner runs")]
-    public uint Interval { get; set; }
+    [Option('t', "timeout", Default = 15u, HelpText = "The number of seconds that the scanner runs")]
+    public uint Timeout { get; set; }
 
     [Option("show-non-midi", HelpText = "Also show non-MIDI bluetooth devices")]
     public bool ShowNonMidi { get; set; }
