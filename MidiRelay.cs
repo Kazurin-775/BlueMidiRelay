@@ -35,14 +35,16 @@ namespace BlueMidiRelay
             _device.ConnectionStatusChanged += OnConnectionStatusChanged;
 
             var midiService = await _device.GetGattServicesForUuidAsync(Constants.UUID_MIDI_SERVICE);
-            if (midiService == null)
+            if (midiService.Status != GattCommunicationStatus.Success
+                || midiService.Services.Count != 1)
             {
-                Console.WriteLine("Error: the device does not support MIDI service.");
+                Console.WriteLine("Error: failed to discover MIDI service on target device.");
                 return false;
             }
 
             var midiCharacteristic = await midiService.Services[0].GetCharacteristicsForUuidAsync(Constants.UUID_MIDI_DATA_CHARACTERISTIC);
-            if (midiCharacteristic == null)
+            if (midiCharacteristic.Status != GattCommunicationStatus.Success
+                || midiCharacteristic.Characteristics.Count != 1)
             {
                 Console.WriteLine("Error: MIDI data I/O characteristic not found?!");
                 return false;
