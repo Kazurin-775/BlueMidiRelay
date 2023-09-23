@@ -67,7 +67,7 @@ namespace BlueMidiRelay
                     device.Send(pitchBendChange.GetAsShortMessage());
 
                     var sign = pitchBendChange.Pitch > 0x2000 ? "+" : (pitchBendChange.Pitch == 0x2000 ? " " : "");
-                    Console.WriteLine($"Pitch bend change: {sign}{pitchBendChange.Pitch / (double)0x2000 - 1:f2}");
+                    Console.WriteLine($"Pitch bend change: {sign}{pitchBendChange.Pitch / (double)0x1000 - 2:f2} semitones");
                     break;
 
                 default:
