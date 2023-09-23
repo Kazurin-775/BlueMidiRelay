@@ -2,7 +2,7 @@
 
 This application works just like [MIDIberry](http://newbodyfresher.linclip.com/) -- it **forwards MIDI messages between bluetooth MIDI devices and wired MIDI devices**. The only differences are that this application is built with .NET Core on Win32 (instead of UWP), and that it only has a command-line interface (for now).
 
-As it is with MIDIberry, the most common use case of this application is to feed bluetooth MIDI input into virtual MIDI loopback devices, such as [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html).
+As it is with MIDIberry, the most common use case of this application is to feed bluetooth MIDI input into virtual MIDI loopback devices, such as [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html). This acts as an **alternative way for Windows 10 / 11 to support BLE MIDI devices** (as most DAWs won't support BLE MIDI, and the conversion from BLE MIDI to native MIDI is not built-in).
 
 I started this project because MIDIberry did not work for me. Hope this project could do the magic for you, but if it doesn't, since it is open source, you could always try to debug and improve it yourself :)
 
