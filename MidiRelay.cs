@@ -17,6 +17,7 @@ namespace BlueMidiRelay
         public event EventHandler<MidiMessage>? MessageReceived;
         private readonly ulong _deviceId;
         private BluetoothLEDevice? _device;
+        private GattDeviceService? _gattService;
         private GattCharacteristic? _characteristic;
         private SemaphoreSlim _disconnectionSema = new(0, 1);
 
@@ -39,15 +40,23 @@ namespace BlueMidiRelay
             if (midiService.Status != GattCommunicationStatus.Success
                 || midiService.Services.Count != 1)
             {
-                Console.WriteLine("Error: failed to discover MIDI service on target device.");
+                Console.WriteLine("Error: failed to discover MIDI service on target device: " + midiService.Status);
+                // Prevent possible resource leaks
+                foreach (var service in midiService.Services)
+                    service.Dispose();
                 return false;
             }
 
-            var midiCharacteristic = await midiService.Services[0].GetCharacteristicsForUuidAsync(Constants.UUID_MIDI_DATA_CHARACTERISTIC);
+            // Prevent resource leaks
+            _gattService = midiService.Services[0];
+
+            var midiCharacteristic = await _gattService.GetCharacteristicsForUuidAsync(Constants.UUID_MIDI_DATA_CHARACTERISTIC);
             if (midiCharacteristic.Status != GattCommunicationStatus.Success
                 || midiCharacteristic.Characteristics.Count != 1)
             {
-                Console.WriteLine("Error: MIDI data I/O characteristic not found?!");
+                // Note: AccessDenied errors are usually caused by previous resource leaks
+                // https://stackoverflow.com/questions/71620883
+                Console.WriteLine("Error: failed to access MIDI data I/O characteristic on target device: " + midiCharacteristic.Status);
                 return false;
             }
 
@@ -158,6 +167,7 @@ namespace BlueMidiRelay
         public void Dispose()
         {
             MessageReceived = null;
+            _gattService?.Dispose();
             _device?.Dispose();
         }
     }
