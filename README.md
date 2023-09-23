@@ -32,3 +32,11 @@ Forward bluetooth MIDI input to local MIDI output:
 ```sh
 .\BlueMidiRelay.exe forward -s a0b1c2d3e4f5 -d "loopMIDI Port"
 ```
+
+## What about bluetooth latency?
+
+After some time of testing, I would say that the latency introduced by my own configuration (bluetooth MIDI keyboard → laptop built-in bluetooth adapter → BlueMidiRelay → loopMIDI → DAW or VST) is only barely perceptible (compared to a wired input device), and should be more than enough for day-to-day practice and music composition work (or even rhythm games, if you would like to give a try). Anyway, how on earth could the latency of a MIDI keyboard be comparable to a real-world acoustic instrument?
+
+(By the way, many thanks to loopMIDI, ASIO, and the work of many others which made this application possible!)
+
+If you ever encounter latency issues when using this application, please double check that the bluetooth versions supported by your PC and MIDI keyboard is recent enough (preferably &geq; 5.0), and that your audio interface / ASIO is set up properly.
