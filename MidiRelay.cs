@@ -136,6 +136,7 @@ namespace BlueMidiRelay
                     Data1 = data[i + 1],
                 };
                 i += 2;
+                firstMessage = false;
 
                 try
                 {
