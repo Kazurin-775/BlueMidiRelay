@@ -4,7 +4,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace BlueMidiRelay
 {
-    internal class MidiRelay
+    internal class MidiRelay : IDisposable
     {
         public struct MidiMessage
         {
@@ -145,6 +145,12 @@ namespace BlueMidiRelay
                     Console.WriteLine(ex.ToString());
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            MessageReceived = null;
+            _device?.Dispose();
         }
     }
 }
