@@ -1,12 +1,18 @@
-﻿using Windows.Devices.Bluetooth;
-using Windows.Devices.Bluetooth.Advertisement;
-using Windows.Devices.Bluetooth.GenericAttributeProfile;
+﻿using Windows.Devices.Bluetooth.Advertisement;
 
 namespace BlueMidiRelay
 {
     internal class Scanner
     {
-        private readonly HashSet<ulong> _discovered = new();
+        // Use class instead of struct since it provides pass-by-ref semantics.
+        private class AdvertisedDevice
+        {
+            public string? LocalName;
+            public bool HasMidiService;
+            public bool AlreadyShown;
+        }
+
+        private readonly Dictionary<ulong, AdvertisedDevice> _discovered = new();
         private readonly bool _showNonMidi;
 
         public Scanner(bool showNonMidi)
@@ -27,30 +33,42 @@ namespace BlueMidiRelay
             await Task.Delay(ms);
 
             watcher.Stop();
+            ShowAllDevicesWithoutNames();
             Console.WriteLine("Scanner stopped.");
         }
 
-        private async void OnAdvertismentReceived(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs e)
+        private void OnAdvertismentReceived(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs e)
         {
-            if (_discovered.Contains(e.BluetoothAddress))
+            if (!_discovered.TryGetValue(e.BluetoothAddress, out var device))
             {
-                return;
+                device = new();
+                _discovered[e.BluetoothAddress] = device;
             }
-            _discovered.Add(e.BluetoothAddress);
 
-            using var device = await BluetoothLEDevice.FromBluetoothAddressAsync(e.BluetoothAddress);
-            // TODO: consider retrying if device == null
-            if (device != null)
+            if (e.Advertisement.LocalName != "")
             {
-                if (!_showNonMidi)
+                device.LocalName = e.Advertisement.LocalName;
+            }
+            if (e.Advertisement.ServiceUuids.Contains(Constants.UUID_MIDI_SERVICE))
+            {
+                device.HasMidiService = true;
+            }
+            if (!device.AlreadyShown && device.LocalName != null && (device.HasMidiService || _showNonMidi))
+            {
+                device.AlreadyShown = true;
+                Console.WriteLine($"Found device: {device.LocalName} (at {e.BluetoothAddress:x})");
+            }
+        }
+
+        private void ShowAllDevicesWithoutNames()
+        {
+            foreach (var pair in _discovered)
+            {
+                if (pair.Value.AlreadyShown || (!_showNonMidi && !pair.Value.HasMidiService))
                 {
-                    var service = await device.GetGattServicesForUuidAsync(Constants.UUID_MIDI_SERVICE);
-                    if (service.Status != GattCommunicationStatus.Success || service.Services.Count == 0)
-                    {
-                        return;
-                    }
+                    continue;
                 }
-                Console.WriteLine($"Found device: {device.Name} (at {device.BluetoothAddress:x})");
+                Console.WriteLine($"Found device with no name at {pair.Key:x}");
             }
         }
     }
