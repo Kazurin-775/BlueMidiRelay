@@ -39,19 +39,40 @@ namespace BlueMidiRelay
 
         public static void SendMessageTo(MidiRelay.MidiMessage message, MidiOut device)
         {
-            if (message.Status >> 5 == 4)
+            int channel = (message.Status & 0xF) + 1;
+            switch (message.Status & 0xF0)
             {
-                // Note on or note off event
-                var noteOn = new NoteOnEvent(0, (message.Status & 0xF) + 1, message.Data0, message.Data1, 0);
-                var msgToSend = (message.Status & 0x10) != 0 ? noteOn.GetAsShortMessage() : noteOn.OffEvent.GetAsShortMessage();
-                device.Send(msgToSend);
+                case 0x80:
+                case 0x90:
+                    // Note on / off
+                    var noteOn = new NoteOnEvent(0, channel, message.Data0, message.Data1, 0);
+                    var msgToSend = (message.Status & 0x10) != 0 ? noteOn.GetAsShortMessage() : noteOn.OffEvent.GetAsShortMessage();
+                    device.Send(msgToSend);
 
-                var action = (message.Status & 0x10) != 0 ? "on" : "off";
-                Console.WriteLine($"Note {noteOn.NoteNumber} {action} (velocity {noteOn.Velocity})");
-            }
-            else
-            {
-                Console.WriteLine($"Warning: ignoring unknown MIDI event {message.Status:#x}");
+                    var action = (message.Status & 0x10) != 0 ? "on" : "off";
+                    Console.WriteLine($"Note {noteOn.NoteNumber} {action} (velocity {noteOn.Velocity})");
+                    break;
+
+                case 0xB0:
+                    // Control / mode change
+                    var controlModeChange = new ControlChangeEvent(0, channel, (MidiController)message.Data0, message.Data1);
+                    device.Send(controlModeChange.GetAsShortMessage());
+
+                    Console.WriteLine($"Control change: {controlModeChange.Controller} -> {controlModeChange.ControllerValue}");
+                    break;
+
+                case 0xE0:
+                    // Pitch bend change (portamento)
+                    var pitchBendChange = new PitchWheelChangeEvent(0, channel, message.Data0 | ((int)message.Data1 << 7));
+                    device.Send(pitchBendChange.GetAsShortMessage());
+
+                    var sign = pitchBendChange.Pitch > 0x2000 ? "+" : (pitchBendChange.Pitch == 0x2000 ? " " : "");
+                    Console.WriteLine($"Pitch bend change: {sign}{pitchBendChange.Pitch / (double)0x2000 - 1:f2}");
+                    break;
+
+                default:
+                    Console.WriteLine($"Warning: ignoring unknown MIDI event 0x{message.Status:X}");
+                    break;
             }
         }
     }
