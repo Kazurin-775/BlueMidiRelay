@@ -45,13 +45,9 @@ namespace BlueMidiRelay
             }
 
             if (e.Advertisement.LocalName != "")
-            {
                 device.LocalName = e.Advertisement.LocalName;
-            }
             if (e.Advertisement.ServiceUuids.Contains(Constants.UUID_MIDI_SERVICE))
-            {
                 device.HasMidiService = true;
-            }
             if (!device.AlreadyShown && device.LocalName != null && (device.HasMidiService || _showNonMidi))
             {
                 device.AlreadyShown = true;
@@ -64,9 +60,7 @@ namespace BlueMidiRelay
             foreach (var pair in _discovered)
             {
                 if (pair.Value.AlreadyShown || (!_showNonMidi && !pair.Value.HasMidiService))
-                {
                     continue;
-                }
                 Console.WriteLine($"Found device with no name at {pair.Key:x}");
             }
         }
