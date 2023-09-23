@@ -21,15 +21,31 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
     using var midiRelay = new MidiRelay(address);
     midiRelay.MessageReceived += (_, e) =>
     {
-        if (e.Status >> 5 == 4)
+        var channel = (e.Status & 0xF) + 1;
+        switch (e.Status & 0xF0)
         {
-            var channel = e.Status & 0xF;
-            var action = (e.Status & 0x10) != 0 ? "on" : "off";
-            Console.WriteLine($"Channel {channel} note {action}, note {e.Data0}, velocity {e.Data1}");
-        }
-        else
-        {
-            Console.WriteLine($"Unknown MIDI event {e.Status:#x} received");
+            case 0x80:
+            case 0x90:
+                // Note on / off
+                var action = (e.Status & 0x10) != 0 ? "on" : "off";
+                Console.WriteLine($"Channel {channel} note {action}, note {e.Data0}, velocity {e.Data1}");
+                break;
+
+            case 0xB0:
+                // Control / mode change
+                Console.WriteLine($"Channel {channel} control change: {(NAudio.Midi.MidiController)e.Data0} -> {e.Data1}");
+                break;
+
+            case 0xE0:
+                // Pitch bend change (portamento)
+                var pitchDelta = e.Data0 | (e.Data1 << 7);
+                var sign = pitchDelta > 0x2000 ? "+" : (pitchDelta == 0x2000 ? " " : "");
+                Console.WriteLine($"Channel {channel} pitch bend change: {sign}{pitchDelta / (double)0x1000 - 2:f2} semitones");
+                break;
+
+            default:
+                Console.WriteLine($"Unknown MIDI event 0x{e.Status:X}");
+                break;
         }
     };
     if (await midiRelay.Connect())
