@@ -4,10 +4,10 @@ using CommandLine;
 var parsedArgs = Parser.Default
     .ParseArguments<ScanOptions, MonitorOptions, ListMidiOptions, ForwardOptions>(args);
 await parsedArgs.WithParsedAsync(async (ScanOptions opts) =>
-    {
-        var scanner = new Scanner(opts.ShowNonMidi);
-        await scanner.Run((int)(opts.Timeout * 1000));
-    });
+{
+    var scanner = new Scanner(opts.ShowNonMidi);
+    await scanner.Run((int)(opts.Timeout * 1000));
+});
 await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
 {
     if (opts.Address.Length != 12 || !opts.Address.All(IsHexDigit))
@@ -16,7 +16,7 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
         return;
     }
     var address = ulong.Parse(opts.Address, System.Globalization.NumberStyles.HexNumber);
-    var midiRelay = new MidiRelay(address);
+    using var midiRelay = new MidiRelay(address);
     midiRelay.MessageReceived += (_, e) =>
     {
         if (e.Status >> 5 == 4)
@@ -50,13 +50,13 @@ await parsedArgs.WithParsedAsync(async (ForwardOptions opts) =>
     }
     var address = ulong.Parse(opts.Source, System.Globalization.NumberStyles.HexNumber);
 
-    var midiOut = MidiDevice.FindMidiOutByName(opts.Destination);
+    using var midiOut = MidiDevice.FindMidiOutByName(opts.Destination);
     if (midiOut == null)
     {
         Console.WriteLine("Error: cannot find MIDI device " + opts.Destination);
         return;
     }
-    var midiRelay = new MidiRelay(address);
+    using var midiRelay = new MidiRelay(address);
     midiRelay.MessageReceived += (_, e) =>
     {
         MidiDevice.SendMessageTo(e, midiOut);
