@@ -18,6 +18,7 @@ namespace BlueMidiRelay
         private readonly ulong _deviceId;
         private BluetoothLEDevice? _device;
         private GattCharacteristic? _characteristic;
+        private SemaphoreSlim _disconnectionSema = new(0, 1);
 
         public MidiRelay(ulong deviceId)
         {
@@ -65,7 +66,8 @@ namespace BlueMidiRelay
         {
             if (sender.ConnectionStatus != BluetoothConnectionStatus.Connected)
             {
-                Console.WriteLine($"Warning: device disconnected");
+                // Console.WriteLine($"Warning: device disconnected");
+                _disconnectionSema.Release();
             }
         }
 
@@ -145,6 +147,11 @@ namespace BlueMidiRelay
                     Console.WriteLine(ex.ToString());
                 }
             }
+        }
+
+        public async Task WaitUntilDisconnect()
+        {
+            await _disconnectionSema.WaitAsync();
         }
 
         public void Dispose()

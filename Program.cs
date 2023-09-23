@@ -33,7 +33,8 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
     if (await midiRelay.Connect())
     {
         Console.WriteLine("Device connected");
-        await Task.Delay(Timeout.Infinite);
+        await midiRelay.WaitUntilDisconnect();
+        Console.WriteLine("Device disconnected");
     }
     else
     {
@@ -68,7 +69,8 @@ await parsedArgs.WithParsedAsync(async (ForwardOptions opts) =>
     }
     Console.WriteLine("Devices connected, forwarding MIDI messages...");
 
-    await Task.Delay(Timeout.Infinite);
+    await midiRelay.WaitUntilDisconnect();
+    Console.WriteLine("Device disconnected");
 });
 
 bool IsHexDigit(char c)
