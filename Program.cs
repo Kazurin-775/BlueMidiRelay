@@ -1,6 +1,8 @@
 ﻿using BlueMidiRelay;
 using CommandLine;
 
+using var interrupt = new SemaphoreSlim(0, 1);
+
 var parsedArgs = Parser.Default
     .ParseArguments<ScanOptions, MonitorOptions, ListMidiOptions, ForwardOptions>(args);
 await parsedArgs.WithParsedAsync(async (ScanOptions opts) =>
@@ -33,8 +35,10 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
     if (await midiRelay.Connect())
     {
         Console.WriteLine("Device connected");
-        await midiRelay.WaitUntilDisconnect();
-        Console.WriteLine("Device disconnected");
+        HookConsoleInterrupt();
+        await Task.WhenAny(midiRelay.WaitUntilDisconnect(), interrupt.WaitAsync());
+        if (!midiRelay.IsConnected)
+            Console.WriteLine("Device disconnected");
     }
     else
     {
@@ -69,8 +73,10 @@ await parsedArgs.WithParsedAsync(async (ForwardOptions opts) =>
     }
     Console.WriteLine("Devices connected, forwarding MIDI messages...");
 
-    await midiRelay.WaitUntilDisconnect();
-    Console.WriteLine("Device disconnected");
+    HookConsoleInterrupt();
+    await Task.WhenAny(midiRelay.WaitUntilDisconnect(), interrupt.WaitAsync());
+    if (!midiRelay.IsConnected)
+        Console.WriteLine("Device disconnected");
 });
 
 bool IsHexDigit(char c)
@@ -78,6 +84,16 @@ bool IsHexDigit(char c)
     return (c >= '0' && c <= '9')
         || (c >= 'a' && c <= 'f')
         || (c >= 'A' && c <= 'F');
+}
+
+void HookConsoleInterrupt()
+{
+    Console.CancelKeyPress += (_, e) =>
+    {
+        e.Cancel = true;
+        Console.WriteLine("Ctrl+C pressed, stopping process...");
+        interrupt?.Release();
+    };
 }
 
 [Verb("scan", HelpText = "Scan for bluetooth MIDI devices")]

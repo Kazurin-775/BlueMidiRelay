@@ -21,6 +21,11 @@ namespace BlueMidiRelay
         private GattCharacteristic? _characteristic;
         private SemaphoreSlim _disconnectionSema = new(0, 1);
 
+        public bool IsConnected
+        {
+            get { return _device?.ConnectionStatus == BluetoothConnectionStatus.Connected; }
+        }
+
         public MidiRelay(ulong deviceId)
         {
             _deviceId = deviceId;
@@ -169,6 +174,7 @@ namespace BlueMidiRelay
             MessageReceived = null;
             _gattService?.Dispose();
             _device?.Dispose();
+            _disconnectionSema.Dispose();
         }
     }
 }
