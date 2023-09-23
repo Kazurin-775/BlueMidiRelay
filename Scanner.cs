@@ -1,5 +1,6 @@
 ﻿using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
+using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace BlueMidiRelay
 {
@@ -37,13 +38,14 @@ namespace BlueMidiRelay
             }
             _discovered.Add(e.BluetoothAddress);
 
-            var device = await BluetoothLEDevice.FromBluetoothAddressAsync(e.BluetoothAddress);
+            using var device = await BluetoothLEDevice.FromBluetoothAddressAsync(e.BluetoothAddress);
+            // TODO: consider retrying if device == null
             if (device != null)
             {
                 if (!_showNonMidi)
                 {
                     var service = await device.GetGattServicesForUuidAsync(Constants.UUID_MIDI_SERVICE);
-                    if (service == null || service.Services.Count == 0)
+                    if (service.Status != GattCommunicationStatus.Success || service.Services.Count == 0)
                     {
                         return;
                     }
