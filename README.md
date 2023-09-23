@@ -6,6 +6,8 @@ As it is with MIDIberry, the most common use case of this application is to feed
 
 I started this project because MIDIberry did not work for me. Hope this project could do the magic for you, but if it doesn't, since it is open source, you could always try to debug and improve it yourself :)
 
+**Minimum required OS version**: this application supports **Windows 10 ver. 1703 (build 15063) or up**, as this is the first version in which modern BLE APIs are implemented. The theoretical minimum OS version we would be able to support shall be 1511 (build 10586), but supporting it would (at least) require rewriting quite a bit of the code, and thus won't be considered for now. Even earlier OSes don't have built-in BLE support, and thus supporting them would be nearly impossible.
+
 ## Usage
 
 Scan for bluetooth MIDI devices:
