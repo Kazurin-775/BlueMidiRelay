@@ -23,7 +23,6 @@ namespace BlueMidiRelay
         public async Task Run(int ms)
         {
             var watcher = new BluetoothLEAdvertisementWatcher();
-            var discovered = new HashSet<ulong>();
 
             watcher.ScanningMode = BluetoothLEScanningMode.Active;
             watcher.Received += OnAdvertismentReceived;
