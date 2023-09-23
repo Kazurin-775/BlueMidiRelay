@@ -63,7 +63,7 @@ namespace BlueMidiRelay
 
                 case 0xE0:
                     // Pitch bend change (portamento)
-                    var pitchBendChange = new PitchWheelChangeEvent(0, channel, message.Data0 | ((int)message.Data1 << 7));
+                    var pitchBendChange = new PitchWheelChangeEvent(0, channel, message.Data0 | (message.Data1 << 7));
                     device.Send(pitchBendChange.GetAsShortMessage());
 
                     var sign = pitchBendChange.Pitch > 0x2000 ? "+" : (pitchBendChange.Pitch == 0x2000 ? " " : "");
