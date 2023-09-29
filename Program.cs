@@ -126,7 +126,7 @@ class ScanOptions
 class MonitorOptions
 {
     [Option('a', "address", Required = true, HelpText = "The device's bluetooth address")]
-    public string Address { get; set; }
+    public string Address { get; set; } = "";
 }
 
 [Verb("list-midi", HelpText = "List all local MIDI devices")]
@@ -136,8 +136,8 @@ class ListMidiOptions { }
 class ForwardOptions
 {
     [Option('s', "source", Required = true, HelpText = "The source device's bluetooth address")]
-    public string Source { get; set; }
+    public string Source { get; set; } = "";
 
     [Option('d', "dest", Required = true, HelpText = "Name of the destination MIDI output")]
-    public string Destination { get; set; }
+    public string Destination { get; set; } = "";
 }
