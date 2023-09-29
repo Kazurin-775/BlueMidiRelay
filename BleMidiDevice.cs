@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace BlueMidiRelay
@@ -36,8 +37,19 @@ namespace BlueMidiRelay
             _device = await BluetoothLEDevice.FromBluetoothAddressAsync(_deviceId);
             if (_device == null)
             {
-                Console.WriteLine("Error: failed to connect to device.");
-                return false;
+                Console.WriteLine("Device not in Bluetooth cache, scanning for it...");
+                if (!await ScanForTargetDevice())
+                {
+                    Console.WriteLine("Error: device not found during Bluetooth scanning. Please check its Bluetooth status.");
+                    return false;
+                }
+                Console.WriteLine("Device rediscovered");
+                _device = await BluetoothLEDevice.FromBluetoothAddressAsync(_deviceId);
+                if (_device == null)
+                {
+                    Console.WriteLine("Error: failed to connect to device.");
+                    return false;
+                }
             }
             _device.ConnectionStatusChanged += OnConnectionStatusChanged;
 
@@ -74,6 +86,34 @@ namespace BlueMidiRelay
             await _characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
 
             return true;
+        }
+
+        /// <summary>
+        /// Watch for BLE advertisements from the target device, so that Windows could add it to
+        /// its BLE cache, and we could connect to it using `BluetoothLEDevice.FromBluetoothAddressAsync()`.
+        /// </summary>
+        private async Task<bool> ScanForTargetDevice()
+        {
+            var watcher = new BluetoothLEAdvertisementWatcher();
+            using var sema = new SemaphoreSlim(0, 1);
+            var discovered = false;
+
+            watcher.ScanningMode = BluetoothLEScanningMode.Active;
+            watcher.Received += (_, e) =>
+            {
+                // TODO: Check if `e.IsConnectable` (which is only available since Build 19041)
+                if (e.BluetoothAddress == _deviceId)
+                {
+                    discovered = true;
+                    sema.Release();
+                }
+            };
+
+            watcher.Start();
+            // TODO: Make this timeout configurable
+            await Task.WhenAny(sema.WaitAsync(), Task.Delay(15000));
+            watcher.Stop();
+            return discovered;
         }
 
         private void OnConnectionStatusChanged(BluetoothLEDevice sender, object args)
