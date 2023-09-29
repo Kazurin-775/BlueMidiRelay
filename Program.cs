@@ -18,8 +18,8 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
         return;
     }
     var address = ulong.Parse(opts.Address, System.Globalization.NumberStyles.HexNumber);
-    using var midiRelay = new MidiRelay(address);
-    midiRelay.MessageReceived += (_, e) =>
+    using var bleMidi = new BleMidiDevice(address);
+    bleMidi.MessageReceived += (_, e) =>
     {
         var channel = (e.Status & 0xF) + 1;
         switch (e.Status & 0xF0)
@@ -48,12 +48,12 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
                 break;
         }
     };
-    if (await midiRelay.Connect())
+    if (await bleMidi.Connect())
     {
         Console.WriteLine("Device connected");
         HookConsoleInterrupt();
-        await Task.WhenAny(midiRelay.WaitUntilDisconnect(), interrupt.WaitAsync());
-        if (!midiRelay.IsConnected)
+        await Task.WhenAny(bleMidi.WaitUntilDisconnect(), interrupt.WaitAsync());
+        if (!bleMidi.IsConnected)
             Console.WriteLine("Device disconnected");
     }
     else
@@ -77,12 +77,12 @@ await parsedArgs.WithParsedAsync(async (ForwardOptions opts) =>
         Console.WriteLine("Error: cannot find MIDI device " + opts.Destination);
         return;
     }
-    using var midiRelay = new MidiRelay(address);
-    midiRelay.MessageReceived += (_, e) =>
+    using var bleMidi = new BleMidiDevice(address);
+    bleMidi.MessageReceived += (_, e) =>
     {
         MidiDevice.SendMessageTo(e, midiOut);
     };
-    if (!await midiRelay.Connect())
+    if (!await bleMidi.Connect())
     {
         Console.WriteLine("Error: cannot connect to bluetooth MIDI device.");
         return;
@@ -90,8 +90,8 @@ await parsedArgs.WithParsedAsync(async (ForwardOptions opts) =>
     Console.WriteLine("Devices connected, forwarding MIDI messages...");
 
     HookConsoleInterrupt();
-    await Task.WhenAny(midiRelay.WaitUntilDisconnect(), interrupt.WaitAsync());
-    if (!midiRelay.IsConnected)
+    await Task.WhenAny(bleMidi.WaitUntilDisconnect(), interrupt.WaitAsync());
+    if (!bleMidi.IsConnected)
         Console.WriteLine("Device disconnected");
 });
 

@@ -37,7 +37,7 @@ namespace BlueMidiRelay
             return null;
         }
 
-        public static void SendMessageTo(MidiRelay.MidiMessage message, MidiOut device)
+        public static void SendMessageTo(BleMidiDevice.MidiMessage message, MidiOut device)
         {
             int channel = (message.Status & 0xF) + 1;
             switch (message.Status & 0xF0)

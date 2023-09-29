@@ -4,7 +4,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace BlueMidiRelay
 {
-    internal class MidiRelay : IDisposable
+    internal class BleMidiDevice : IDisposable
     {
         public struct MidiMessage
         {
@@ -26,7 +26,7 @@ namespace BlueMidiRelay
             get { return _device?.ConnectionStatus == BluetoothConnectionStatus.Connected; }
         }
 
-        public MidiRelay(ulong deviceId)
+        public BleMidiDevice(ulong deviceId)
         {
             _deviceId = deviceId;
         }
