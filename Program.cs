@@ -48,6 +48,13 @@ await parsedArgs.WithParsedAsync(async (MonitorOptions opts) =>
                 break;
         }
     };
+    bleMidi.SysexMessageReceived += (_, e) =>
+    {
+        Console.Write("SysEx message:");
+        foreach (var b in e.Data)
+            Console.Write($" {b:X2}");
+        Console.WriteLine();
+    };
     if (await bleMidi.Connect())
     {
         Console.WriteLine("Device connected");
@@ -81,6 +88,10 @@ await parsedArgs.WithParsedAsync(async (ForwardOptions opts) =>
     bleMidi.MessageReceived += (_, e) =>
     {
         MidiDevice.SendMessageTo(e, midiOut);
+    };
+    bleMidi.SysexMessageReceived += (_, e) =>
+    {
+        MidiDevice.SendSysexMessageTo(e, midiOut);
     };
     if (!await bleMidi.Connect())
     {

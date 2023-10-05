@@ -75,5 +75,19 @@ namespace BlueMidiRelay
                     break;
             }
         }
+
+        public static void SendSysexMessageTo(BleMidiDevice.MidiSysexMessage message, MidiOut device)
+        {
+            var packet = new byte[message.Data.Length + 2];
+            Array.Copy(message.Data, 0, packet, 1, message.Data.Length);
+            packet[0] = 0xF0;
+            packet[message.Data.Length + 1] = 0xF7;
+            device.SendBuffer(packet);
+
+            Console.Write("SysEx message:");
+            foreach (var b in message.Data)
+                Console.Write($" {b:X2}");
+            Console.WriteLine();
+        }
     }
 }

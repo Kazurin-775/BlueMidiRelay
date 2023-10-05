@@ -14,8 +14,14 @@ namespace BlueMidiRelay
             public byte Data0;
             public byte Data1;
         }
+        public struct MidiSysexMessage
+        {
+            public uint Timestamp;
+            public byte[] Data;
+        }
 
         public event EventHandler<MidiMessage>? MessageReceived;
+        public event EventHandler<MidiSysexMessage>? SysexMessageReceived;
         private readonly ulong _deviceId;
         private BluetoothLEDevice? _device;
         private GattDeviceService? _gattService;
@@ -159,6 +165,48 @@ namespace BlueMidiRelay
                 {
                     status = data[i];
                     i++;
+                }
+
+                if (status == 0xF0)
+                {
+                    // System Exclusive message
+                    var sysexBegin = i;
+                    while (i < data.Length && data[i] >> 7 == 0)
+                    {
+                        i++;
+                    }
+                    if (i >= data.Length)
+                    {
+                        Console.WriteLine("Warning: SysEx message across multiple packets (this is not supported yet)");
+                        return;
+                    }
+                    if (i + 1 >= data.Length || data[i + 1] != 0xF7)
+                    {
+                        Console.WriteLine("Warning: malformed SysEx message (no terminator)");
+                        return;
+                    }
+
+                    var sysexData = new byte[i - sysexBegin];
+                    Array.Copy(data, sysexBegin, sysexData, 0, sysexData.Length);
+                    var sysexMsg = new MidiSysexMessage
+                    {
+                        Timestamp = timestamp,
+                        Data = sysexData,
+                    };
+                    try
+                    {
+                        SysexMessageReceived?.Invoke(this, sysexMsg);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("MidiRelay: error calling OnSysexMessage");
+                        Console.WriteLine(ex.ToString());
+                    }
+
+                    // Skip timestamp and terminator
+                    i += 2;
+                    // We should now be at the end of the packet, but here we continue the loop just in case.
+                    continue;
                 }
 
                 if (firstMessage && !hasTimestampByte)
