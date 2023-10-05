@@ -169,7 +169,7 @@ namespace BlueMidiRelay
 
                 if (i >= data.Length || data[i] >> 7 != 0)
                 {
-                    Console.WriteLine($"Note: system common / RT message received (status {status:#x})");
+                    Console.WriteLine($"Note: system common / RT message received (status 0x{status:X})");
                     continue;
                 }
                 if (i + 2 > data.Length)
