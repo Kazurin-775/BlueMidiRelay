@@ -42,3 +42,5 @@ After some time of testing, I would say that the latency introduced by my own co
 (By the way, many thanks to loopMIDI, ASIO, and the work of many others which made this application possible!)
 
 If you ever encounter latency issues when using this application, please double check that the bluetooth versions supported by your PC and MIDI keyboard is recent enough (preferably &geq; 5.0), and that your audio interface / ASIO is set up properly.
+
+Also, please note that if there is significant interference in the 2.4 GHz radio frequency band around you (e.g. in public offices or restaurants), the bluetooth connection between your PC and MIDI keyboard may become unstable, which may result in the timing becoming difficult to control. If you ever encounter such situations, you are out of luck, and you will need to use wired mode to achieve precise timing control.
